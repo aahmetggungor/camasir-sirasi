@@ -123,7 +123,7 @@ export function LaundryProvider({ children }: { children: ReactNode }) {
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [client, profile, refresh]);
+  }, [client, profile?.id, refresh]);
 
   const run = useCallback(
     async <T,>(

@@ -46,4 +46,3 @@ end $$;
 
 do $ begin if to_regprocedure('public.rls_auto_enable()') is not null then execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated'; end if; end $;
 create policy cs_invites_no_client_access on private.cs_invites for all to anon, authenticated using(false) with check(false);
-

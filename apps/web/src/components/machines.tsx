@@ -384,7 +384,7 @@ function AddMachineForm({
             <input
               type="number"
               value={program.durationMinutes}
-              min={5}
+              min={10}
               max={240}
               required
               onChange={(event) =>
