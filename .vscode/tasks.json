@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ÇamaşırSırası: Web",
+      "type": "shell",
+      "command": "npm.cmd run web",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: Mobil Metro",
+      "type": "shell",
+      "command": "npm.cmd run mobile",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: Android hazırla",
+      "type": "shell",
+      "command": "npx.cmd expo prebuild --platform android --no-install",
+      "options": { "cwd": "${workspaceFolder}/apps/mobile" },
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: Android çalıştır",
+      "type": "shell",
+      "command": "npm.cmd run android",
+      "options": {
+        "env": {
+          "ANDROID_HOME": "${env:LOCALAPPDATA}/Android/Sdk",
+          "JAVA_HOME": "C:/Program Files/Android/Android Studio/jbr"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: TypeScript",
+      "type": "shell",
+      "command": "npm.cmd run typecheck",
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: Testler",
+      "type": "shell",
+      "command": "npm.cmd test",
+      "problemMatcher": []
+    }
+  ]
+}
