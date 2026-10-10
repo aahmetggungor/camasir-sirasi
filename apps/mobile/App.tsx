@@ -38,11 +38,12 @@ import { machineCode } from "@camasir/core";
 import { MachineScan } from "./src/components/MachineScan";
 
 const tabs: Array<{
-  id: "machines" | "queue" | "area";
+  id: "washers" | "dryers" | "queue" | "area";
   label: string;
   icon: IconName;
 }> = [
-  { id: "machines", label: "Makineler", icon: "grid-outline" },
+  { id: "washers", label: "Çamaşır", icon: "water-outline" },
+  { id: "dryers", label: "Kurutma", icon: "sunny-outline" },
   { id: "queue", label: "Sıram", icon: "time-outline" },
   { id: "area", label: "Alan", icon: "people-outline" },
 ];
@@ -50,7 +51,9 @@ const tabs: Array<{
 export default function App() {
   const state = useLaundry();
   const [spaceId, setSpaceId] = useState("");
-  const [tab, setTab] = useState<"machines" | "queue" | "area">("machines");
+  const [tab, setTab] = useState<"washers" | "dryers" | "queue" | "area">(
+    "washers",
+  );
   const [picker, setPicker] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
@@ -62,7 +65,7 @@ export default function App() {
   useEffect(() => {
     if (!state.profile) {
       setSpaceId("");
-      setTab("machines");
+      setTab("washers");
     }
   }, [state.profile?.id]);
   useEffect(() => {
@@ -86,7 +89,7 @@ export default function App() {
   }, []);
   const selectSpace = (id: string) => {
     setSpaceId(id);
-    setTab("machines");
+    setTab("washers");
     setPicker(false);
   };
   const active = space?.membershipStatus === "active";
@@ -196,17 +199,19 @@ export default function App() {
                     space={space}
                     onCreated={selectSpace}
                   />
-                ) : tab === "machines" ? (
+                ) : tab === "washers" || tab === "dryers" ? (
                   <MachinesScreen
+                    key={`${space.id}-${tab}`}
                     state={state}
                     space={space}
+                    machineType={tab === "dryers" ? "dryer" : "washer"}
                     onQueue={() => setTab("queue")}
                   />
                 ) : (
                   <QueueScreen
                     state={state}
                     space={space}
-                    onMachines={() => setTab("machines")}
+                    onMachines={() => setTab("washers")}
                   />
                 ))}
             </ScrollView>
@@ -221,17 +226,31 @@ export default function App() {
                     setTab(item.id);
                     state.clearNotice();
                   }}
-                  style={[s.navItem, tab === item.id && s.navSelected]}
+                  style={[
+                    s.navItem,
+                    tab === item.id &&
+                      (item.id === "dryers"
+                        ? s.navDryerSelected
+                        : s.navSelected),
+                  ]}
                 >
                   <Icon
                     name={item.icon}
-                    color={tab === item.id ? colors.blue : colors.muted}
+                    color={
+                      tab === item.id
+                        ? item.id === "dryers"
+                          ? "#a66e22"
+                          : colors.blue
+                        : colors.muted
+                    }
                     size={23}
                   />
                   <Text
                     style={[
                       s.navText,
-                      tab === item.id && { color: colors.blue },
+                      tab === item.id && {
+                        color: item.id === "dryers" ? "#a66e22" : colors.blue,
+                      },
                     ]}
                   >
                     {item.label}
@@ -302,9 +321,12 @@ export default function App() {
                   setScanning(false);
                   setMachineQr("");
                 }}
-                onMachine={(id) => {
+                onMachine={(id, machineId) => {
                   setSpaceId(id);
-                  setTab("machines");
+                  const machine = state.snapshot?.machines.find(
+                    (m) => m.id === machineId,
+                  );
+                  setTab(machine?.type === "dryer" ? "dryers" : "washers");
                 }}
                 onStarted={() => setTab("queue")}
               />
@@ -440,6 +462,7 @@ const s = StyleSheet.create({
     borderRadius: 12,
   },
   navSelected: { backgroundColor: colors.blueSoft },
+  navDryerSelected: { backgroundColor: "#fff6e8" },
   navText: {
     fontSize: 11,
     lineHeight: 16,

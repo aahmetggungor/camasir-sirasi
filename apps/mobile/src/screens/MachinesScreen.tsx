@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
-import type { Machine, Slot, Space } from "@camasir/core";
+import type { Machine, MachineType, Slot, Space } from "@camasir/core";
 import { activeMachines, countdown } from "@camasir/core";
 import { useClock } from "../hooks/useClock";
 import { WaitlistSheet } from "./QueueScreen";
@@ -201,18 +201,21 @@ function BookingSheet({
 export function MachinesScreen({
   state,
   space,
+  machineType,
   onQueue,
 }: {
   state: LaundryState;
   space: Space;
   onQueue: () => void;
+  machineType: MachineType;
 }) {
+  const dryer = machineType === "dryer";
   const [booking, setBooking] = useState<Machine | null>(null);
   const [waiting, setWaiting] = useState<Machine | null>(null);
   const now = useClock();
   const machines =
     state.snapshot?.machines.filter(
-      (machine) => machine.spaceId === space.id,
+      (machine) => machine.spaceId === space.id && machine.type === machineType,
     ) ?? [];
   const reservations =
     state.snapshot?.reservations.filter(
@@ -241,8 +244,12 @@ export function MachinesScreen({
   return (
     <View style={{ gap: 20 }}>
       <View style={{ gap: 7 }}>
-        <Heading>Çamaşırhane</Heading>
-        <Body muted>Makineni seç, uygun bir saate sıranı ayır.</Body>
+        <Heading>{dryer ? "Kurutma makineleri" : "Çamaşır makineleri"}</Heading>
+        <Body muted>
+          {dryer
+            ? "Kurutma programını seç, uygun saatini ayır."
+            : "Yıkama programını seç, uygun saatini ayır."}
+        </Body>
       </View>
       <Row>
         <Badge text={`${free} boş makine`} tone="green" />
@@ -250,7 +257,9 @@ export function MachinesScreen({
       </Row>
       {using.length > 0 && (
         <Card>
-          <Heading small>Aktif makineler</Heading>
+          <Heading small>
+            {dryer ? "Aktif kurutmalar" : "Aktif yıkamalar"}
+          </Heading>
           <Body muted>Kalan süre · çoktan aza</Body>
           {using.map((machine) => {
             const watched = state.snapshot?.watches.some(
@@ -278,7 +287,7 @@ export function MachinesScreen({
                   style={{
                     fontSize: 25,
                     fontWeight: "700",
-                    color: colors.blue,
+                    color: dryer ? "#a66e22" : colors.blue,
                   }}
                 >
                   {countdown(machine.estimatedEndAt, now)}
@@ -331,12 +340,12 @@ export function MachinesScreen({
           <Badge
             text={
               reservations[0].status === "running"
-                ? "Yıkaman devam ediyor"
+                ? "Kullanımın sürüyor"
                 : "Sıran ayrıldı"
             }
           />
           <Heading small>
-            {machines.find(
+            {state.snapshot?.machines.find(
               (machine) => machine.id === reservations[0].machineId,
             )?.name ?? "Rezervasyonun"}
           </Heading>
@@ -364,7 +373,11 @@ export function MachinesScreen({
         <Card>
           <Empty
             icon="cube-outline"
-            title="Makineler henüz eklenmemiş"
+            title={
+              dryer
+                ? "Henüz kurutma makinesi yok"
+                : "Henüz çamaşır makinesi yok"
+            }
             text="Alan yöneticisi makineleri ve programları eklediğinde burada görünür."
           />
         </Card>
@@ -380,10 +393,16 @@ export function MachinesScreen({
             <Row>
               <View style={s.machineHeading}>
                 <View style={s.visual}>
-                  <MachineVisual available={machine.status === "available"} />
+                  <MachineVisual
+                    available={machine.status === "available"}
+                    type={machine.type}
+                  />
                 </View>
                 <View style={{ gap: 7, flex: 1 }}>
                   <Heading small>{machine.name}</Heading>
+                  <Label>
+                    {dryer ? "Kurutma makinesi" : "Çamaşır makinesi"}
+                  </Label>
                   <Badge text={status.label} tone={status.tone} />
                 </View>
               </View>

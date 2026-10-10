@@ -106,8 +106,8 @@ export function createRemoteClient(
       command<{ code: string; expiresAt: string }>("createInvite", { spaceId }),
     saveRules: (spaceId: string, rules: SpaceRules) =>
       command("saveRules", { spaceId, rules }),
-    addMachine: (spaceId, name, programs) =>
-      command("addMachine", { spaceId, name, programs }),
+    addMachine: (spaceId, name, programs, type = "washer") =>
+      command("addMachine", { spaceId, name, programs, machineType: type }),
     setMachineStatus: (machineId: string, status: MachineStatus) =>
       command("setMachineStatus", { machineId, status }),
     addProgram: (machineId, name, durationMinutes) =>

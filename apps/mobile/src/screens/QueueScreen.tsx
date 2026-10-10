@@ -92,6 +92,9 @@ function StartSheet({
     >
       <Card>
         <Heading small>{machine?.name}</Heading>
+        <Label>
+          {machine?.type === "dryer" ? "Kurutma makinesi" : "Çamaşır makinesi"}
+        </Label>
         <Body>
           {time(reservation.startsAt, space.timezone)} ·{" "}
           {
@@ -333,15 +336,21 @@ export function QueueScreen({
         item.userId === state.profile?.id &&
         item.status === "pending",
     ) ?? [];
-  const machineName = (id: string) =>
-    data?.machines.find((item) => item.id === id)?.name ?? "Makine";
+  const machineName = (id: string) => {
+    const machine = data?.machines.find((m) => m.id === id);
+    return machine
+      ? `${machine.type === "dryer" ? "Kurutma" : "Çamaşır"} · ${machine.name}`
+      : "Makine";
+  };
   const programName = (id: string) =>
     data?.programs.find((item) => item.id === id)?.name ?? "Program";
   return (
     <View style={{ gap: 20 }}>
       <View style={{ gap: 7 }}>
         <Heading>Sıram</Heading>
-        <Body muted>Rezervasyonun, yıkaman ve boşalan yer teklifleri.</Body>
+        <Body muted>
+          Çamaşır ve kurutma kullanımın, rezervasyonun ve sıran.
+        </Body>
       </View>
       {offers.map((offer) => {
         const expired = new Date(offer.expiresAt).getTime() <= now;
@@ -395,7 +404,7 @@ export function QueueScreen({
             text="Uygun bir saate rezervasyon yap veya boşalan yerler için bekleme sırasına gir."
           />
           <Button
-            label="Makinelere göz at"
+            label="Çamaşır makinelerine göz at"
             onPress={onMachines}
             icon="arrow-forward-outline"
           />

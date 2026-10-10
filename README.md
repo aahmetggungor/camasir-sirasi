@@ -38,6 +38,10 @@ Supabase şeması `supabase/migrations` altındadır. Bağlı projede migration'
 
 ## İlk sürümde çalışan akışlar
 
+**1.0.2 — Çamaşır / Kurutma:** Web menüsü ve mobil sekmeler ayrıdır. Her bölüm yalnız kendi türünü ve o türe ait aktif sayaçları gösterir. Çamaşırda mavi, kurutmada hafif amber vurgu ve açık tür etiketi vardır. İlgili bölümde makine eklemek doğru türü kaydeder; kurutma programları ayrı tanımlanır. Kurutma da QR, hızlı başlatma, rezervasyon, program ekleme, geri sayım, bildirim takibi, FIFO teklifi, bakım ve teslim akışlarının tamamını kullanır.
+
+Mevcut makine kayıtları çamaşır türü olarak korunur. Eski istemcilerin tür belirtmeden oluşturduğu kayıtlar da çamaşırdır. Tek aktif hak ve günlük kota **alan genelinde iki tür için ortak** kalır; yıkamayı teslim ettikten sonra kurutma hakkı alınabilir. Tür ayrımı ikinci aktif hak yaratmaz. Yeni SQL regresyonu: `supabase/tests/machine_types.sql`.
+
 - Hesap/giriş, e-posta doğrulama kontrolü, özel alan oluşturma ve alan seçimi.
 - Davet kodu ile başvuru; onay bekleyen/engellenen kullanıcıda makinelere erişimin kapalı olması.
 - Yetkili yöneticinin sakin kontrolüyle üyeyi onaylaması, reddetmesi veya erişimini kapatması.

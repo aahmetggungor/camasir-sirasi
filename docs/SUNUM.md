@@ -26,6 +26,8 @@
 
 ## Sunum gösterimi
 
+Çamaşır ve Kurutma menülerini sırayla aç: çamaşır listesinde kurutma kaydı, kurutma listesinde çamaşır kaydı görünmez. Kurutma bölümünde makine eklerken program adları kurutmaya uygun gelir. Aynı QR, sayaç, rezervasyon ve sıra akışının kurutmada da çalıştığını göster. Veritabanındaki `machine_type` gerçek türü saklar; iki tür tek işlem altyapısını paylaşır. Mavi/amber vurgu ve açık etiket renk farkını anlamayı kolaylaştırır. İki tür için toplam tek aktif hak kuralı korunur.
+
 Hızlı kullanım gösterimi: mobilde üst menüdeki QR düğmesine bas, makine etiketini okut, program kısayolunu seç ve fiziksel başlatma onayını ver. Önceden rezervasyon oluşturmadan uygun makinede kullanım açılır. Aktif makineler ekranında geri sayımı, çoktan aza sıralamayı, **Boşalınca haber ver** ile **Sıra iste** farkını göster. Bildirim hakkı ayırmaz; sıra isteği hak tutar. **Program ekle** yönetici web panelinde mevcut makine kartındadır.
 
 Kod: `MachineScan.tsx` makineyi çözüp formu açar; `packages/core/src/machines.ts` QR bağlantısı, sayaç ve sıralamayı iki platform için ortak tutar. `qr_walk_in_and_machine_alerts` migration'ındaki `startWalkIn` aynı alan kilidi altında program, üyelik, tek hak, kota ve çakışma kontrolü yapar. `qr_walk_in.sql` bu davranışların PostgreSQL testidir.

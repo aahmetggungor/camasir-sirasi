@@ -10,6 +10,29 @@
   --green: #1c8b68;
   --radius: 13px;
 }
+.nav-item.nav-dryer.selected {
+  background: #fff6e8;
+  color: #a66e22;
+}
+.machine-type-tag {
+  display: inline-block;
+  margin-top: 9px;
+  font-size: 10px;
+  color: #587daf;
+  background: #f1f6ff;
+  padding: 4px 7px;
+  border-radius: 5px;
+}
+.machine-page-dryer .machine-type-tag,
+.dryer-type-tag {
+  color: #926222;
+  background: #fff6e8;
+}
+.machine-page-dryer .machine-illustration,
+.machine-page-dryer .live-machine-row > svg,
+.machine-page-dryer .live-countdown {
+  color: #a66e22;
+}
 .machine-heading-actions {
   display: flex;
   gap: 10px;

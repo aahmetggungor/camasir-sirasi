@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
-import { machineCode, type Machine, type Space } from "@camasir/core";
+import {
+  machineCode,
+  type Machine,
+  type MachineType,
+  type Space,
+} from "@camasir/core";
 import { useLaundry } from "@/lib/laundry";
 import { Button, Field, time } from "./ui";
 
@@ -17,7 +22,11 @@ export function useClock() {
   }, []);
   return now;
 }
-export function QuickUsageForm({ onDone }: { onDone: () => void }) {
+export function QuickUsageForm({
+  onDone,
+}: {
+  onDone: (type: MachineType) => void;
+}) {
   const { snapshot, busy, run } = useLaundry();
   const [qr, setQr] = useState("");
   const [machineId, setMachineId] = useState("");
@@ -54,7 +63,7 @@ export function QuickUsageForm({ onDone }: { onDone: () => void }) {
       (c) => c.startWalkIn(qr, programId),
       "Kullanım başladı. Geri sayımını takip edebilirsin.",
     );
-    if (result) onDone();
+    if (result) onDone(machine.type);
   }
   return (
     <form className="form-stack" onSubmit={submit}>
@@ -73,6 +82,11 @@ export function QuickUsageForm({ onDone }: { onDone: () => void }) {
       ) : (
         <>
           <h3>{machine.name}</h3>
+          <span
+            className={`machine-type-tag ${machine.type === "dryer" ? "dryer-type-tag" : ""}`}
+          >
+            {machine.type === "dryer" ? "Kurutma makinesi" : "Çamaşır makinesi"}
+          </span>
           <Field label="Program kısayolları">
             <select
               value={programId}

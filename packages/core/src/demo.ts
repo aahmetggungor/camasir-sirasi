@@ -89,6 +89,7 @@ function seed(): DemoState {
       id: `demo-machine-${n}`,
       spaceId: "demo-space",
       name: `Çamaşır Makinesi ${n}`,
+      type: "washer",
       status: n === 3 ? "out_of_order" : "available",
       qrToken: `CAMASIR-DEMO-${n}`,
       estimatedEndAt: null,
@@ -135,6 +136,9 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
       try {
         memory = JSON.parse(raw) as DemoState;
         memory.watches ??= [];
+        memory.machines.forEach((m) => {
+          m.type ??= "washer";
+        });
       } catch {
         memory = seed();
       }
@@ -288,7 +292,7 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
           notify(
             db,
             r.userId,
-            "Tahmini yıkama süresi doldu",
+            "Program süresi doldu",
             `${m.name}: çamaşırlarını kontrol edip aldıktan sonra teslimi onayla.`,
           );
       }
@@ -697,9 +701,11 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
         validateRules(rules);
         s.rules = { ...rules };
       }),
-    addMachine: (spaceId, name, programs) =>
+    addMachine: (spaceId, name, programs, type = "washer") =>
       run((db) => {
         space(db, spaceId, true);
+        if (!["washer", "dryer"].includes(type))
+          throw new Error("Makine türü çamaşır veya kurutma olmalıdır.");
         if (
           !name.trim() ||
           !programs.length ||
@@ -719,6 +725,7 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
           id: mid,
           spaceId,
           name: name.trim(),
+          type,
           status: "available",
           qrToken: id(),
           estimatedEndAt: null,

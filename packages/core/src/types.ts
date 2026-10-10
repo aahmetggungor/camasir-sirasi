@@ -1,6 +1,7 @@
 export type MembershipStatus =
   "pending" | "active" | "rejected" | "removed" | "blocked";
 export type MemberRole = "owner" | "admin" | "member";
+export type MachineType = "washer" | "dryer";
 export type MachineStatus =
   "available" | "running" | "awaiting_pickup" | "out_of_order" | "needs_check";
 export type ReservationStatus =
@@ -48,6 +49,7 @@ export interface Machine {
   id: string;
   spaceId: string;
   name: string;
+  type: MachineType;
   status: MachineStatus;
   qrToken: string;
   estimatedEndAt: string | null;
@@ -151,6 +153,7 @@ export interface LaundryClient {
     spaceId: string,
     name: string,
     programs: Array<{ name: string; durationMinutes: number }>,
+    type?: MachineType,
   ): Promise<void>;
   setMachineStatus(machineId: string, status: MachineStatus): Promise<void>;
   addProgram(

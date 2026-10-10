@@ -144,7 +144,7 @@ export function Modal({
 export function StatusBadge({ status }: { status: string }) {
   const labels: Record<string, string> = {
     available: "Müsait",
-    running: "Yıkama sürüyor",
+    running: "Kullanım sürüyor",
     awaiting_pickup: "Çamaşırlar alınacak",
     out_of_order: "Servis dışı",
     needs_check: "Kontrol gerekiyor",

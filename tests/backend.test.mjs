@@ -21,6 +21,26 @@ const { machineCode, machineLink, countdown, activeMachines } = await import(pat
 const storage=()=>{const data=new Map();return{getItem:k=>data.get(k)??null,setItem:(k,v)=>{data.set(k,v);},removeItem:k=>{data.delete(k);}};};
 const at=(day,hour,minute=0)=>new Date(`${day}T${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:00+03:00`).getTime();
 
+test('Kurutma kimliği kalıcıdır; QR, program, tek hak ve FIFO akışı çamaşır ile aynı kuralları kullanır',async()=>{
+  const old=Date.now;const now=at('2026-10-11',10);Date.now=()=>now;
+  try{
+    const saved=storage(),c=createDemoClient(saved);await c.signIn('owner@demo.local','demo12345');
+    await assert.rejects(c.addMachine('demo-space','Invalid',[{name:'Dry',durationMinutes:30}],'invalid'),/Makine türü/);
+    await c.addMachine('demo-space','Kurutma 1',[{name:'Hızlı kurutma',durationMinutes:30}],'dryer');
+    let s=await c.getSnapshot();const dryer=s.machines.find(m=>m.type==='dryer');assert.ok(dryer);assert.equal(s.machines.filter(m=>m.type==='washer').length,3);
+    const program=s.programs.find(p=>p.machineId===dryer.id);assert.ok(program);
+    await c.signIn('member@demo.local','demo12345');
+    await assert.rejects(c.startWalkIn(dryer.qrToken,'demo-program-1-quick'),/Program bu makineye ait değil/);
+    const rid=await c.startWalkIn(dryer.qrToken,program.id);
+    await assert.rejects(c.reserve('demo-machine-1','demo-program-1-quick',new Date(now).toISOString()),/zaten aktif/);
+    await c.finishUsage(rid);await c.signIn('owner@demo.local','demo12345');
+    await c.joinWaitlist('demo-space',program.id,new Date(now+3600_000).toISOString());
+    s=await c.getSnapshot();const offer=s.offers.find(o=>o.machineId===dryer.id&&o.status==='pending');assert.ok(offer);
+    await c.acceptOffer(offer.id);await c.startUsage(offer.reservationId,machineLink(dryer.qrToken));await c.finishUsage(offer.reservationId);
+    const reopened=createDemoClient(saved);assert.equal((await reopened.getSnapshot()).machines.find(m=>m.id===dryer.id).type,'dryer');
+  }finally{Date.now=old;}
+});
+
 test('Makine QR bağlantısı güvenli ayrıştırılır; aktif liste süreye göre çoktan aza ve sayaç zaman damgasından hesaplanır',()=>{
   assert.equal(machineCode(machineLink('CAMASIR-DEMO-1')),'CAMASIR-DEMO-1');
   assert.equal(machineCode('https://evil.invalid/?code=CAMASIR-DEMO-1'),'');
@@ -62,7 +82,7 @@ test('Tahmini bitiş yalnız sahibi uyarır; teslim bildirimi tek seferdir ve bi
     now+=1801_000;await c.refreshTimers();
     let s=await c.getSnapshot();assert.equal(s.machines[0].status,'awaiting_pickup');assert.equal(s.notifications.filter(n=>n.title==='Makinenin teslimi onaylandı').length,0);
     await c.signIn('member@demo.local','demo12345');await c.refreshTimers();s=await c.getSnapshot();
-    assert.equal(s.watches.length,0);assert.equal(s.notifications.filter(n=>n.title==='Tahmini yıkama süresi doldu').length,1);
+    assert.equal(s.watches.length,0);assert.equal(s.notifications.filter(n=>n.title==='Program süresi doldu').length,1);
     await c.finishUsage(rid);await c.signIn('owner@demo.local','demo12345');s=await c.getSnapshot();
     assert.equal(s.watches.length,0);assert.equal(s.notifications.filter(n=>n.title==='Makinenin teslimi onaylandı').length,1);
     assert.equal(s.reservations.filter(r=>r.userId==='demo-owner').length,0);

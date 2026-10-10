@@ -90,7 +90,7 @@ update public.cs_machines set estimated_end_at=clock_timestamp()-interval '1 sec
 set local role authenticated;
 select public.cs_command('refreshTimers');
 select public.cs_command('refreshTimers');
-select pg_temp.assert_true((select count(*)=1 from public.cs_notifications where user_id=auth.uid() and title='Tahmini yıkama süresi doldu'),'end reminder exactly once');
+select pg_temp.assert_true((select count(*)=1 from public.cs_notifications where user_id=auth.uid() and title='Program süresi doldu'),'end reminder exactly once');
 select pg_temp.assert_true((select status='awaiting_pickup' from public.cs_machines where id=(select v::uuid from cs_test_context where k='machine')),'estimate not vacancy');
 select public.cs_command('finishUsage',jsonb_build_object('reservationId',(select v from cs_test_context where k='walkIn')));
 select set_config('request.jwt.claims','{"sub":"11111111-1111-4111-a111-111111111111","role":"authenticated"}',true);

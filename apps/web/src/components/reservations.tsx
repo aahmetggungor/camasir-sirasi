@@ -53,8 +53,12 @@ export function ReservationsPage({ space }: { space: Space }) {
         w.userId === profile?.id &&
         ["waiting", "offered"].includes(w.status),
     ) ?? [];
-  const machineName = (id: string) =>
-    snapshot?.machines.find((m) => m.id === id)?.name ?? "Makine";
+  const machineName = (id: string) => {
+    const machine = snapshot?.machines.find((m) => m.id === id);
+    return machine
+      ? `${machine.type === "dryer" ? "Kurutma" : "Çamaşır"} · ${machine.name}`
+      : "Makine";
+  };
   const programName = (id: string) =>
     snapshot?.programs.find((p) => p.id === id)?.name ?? "Program";
   async function finish() {
@@ -89,8 +93,8 @@ export function ReservationsPage({ space }: { space: Space }) {
           <h1>Rezervasyonlar</h1>
           <p>
             {admin
-              ? "Alanın rezervasyonlarını ve devam eden yıkamalarını takip et."
-              : "Rezervasyonlarını, yıkamanı ve bekleme sıranı takip et."}
+              ? "Çamaşır ve kurutma rezervasyonlarını takip et."
+              : "Kullanımını, rezervasyonunu ve sıranı takip et."}
           </p>
         </div>
         <span className="outline-pill">
@@ -211,10 +215,13 @@ export function ReservationsPage({ space }: { space: Space }) {
           <EmptyState
             icon={<CalendarDays size={30} />}
             title="Şimdilik rezervasyon yok"
-            text="Makineler ekranından programını ve uygun saatini seçerek ilk rezervasyonunu yapabilirsin."
+            text="Çamaşır veya kurutma bölümünden programını ve uygun saatini seçebilirsin."
           >
-            <a className="button button-secondary" href="#machines">
-              Makinelere git <ArrowRight size={16} />
+            <a className="button button-secondary" href="#washers">
+              Çamaşır <ArrowRight size={16} />
+            </a>
+            <a className="button button-secondary" href="#dryers">
+              Kurutma <ArrowRight size={16} />
             </a>
           </EmptyState>
         ) : (
@@ -310,13 +317,13 @@ export function ReservationsPage({ space }: { space: Space }) {
         <p>
           <strong>Süreler sunucuda kontrol edilir.</strong> Başlatma toleransı{" "}
           {space.rules.startGraceMinutes} dakika, çamaşırları alma tamponu{" "}
-          {space.rules.pickupMinutes} dakika. Önceki yıkama bitmeden makine
+          {space.rules.pickupMinutes} dakika. Önceki kullanım bitmeden makine
           yeniden atanmaz.
         </p>
       </div>
       {starting && (
         <Modal
-          title="Yıkamayı başlat"
+          title="Kullanımı başlat"
           description={`${machineName(starting.machineId)} · Makinenin yanındaki kodu doğrula.`}
           onClose={() => setStarting(null)}
         >

@@ -16,6 +16,7 @@ import {
   SlidersHorizontal,
   Users,
   WashingMachine,
+  Wind,
 } from "lucide-react";
 import type { Space } from "@camasir/core";
 import { useLaundry } from "@/lib/laundry";
@@ -33,14 +34,16 @@ import {
   dateTime,
 } from "./ui";
 
-type Page = "machines" | "reservations" | "members" | "invites" | "rules";
+type Page =
+  "washers" | "dryers" | "reservations" | "members" | "invites" | "rules";
 const navigation: {
   id: Page;
   label: string;
   icon: typeof WashingMachine;
   admin?: boolean;
 }[] = [
-  { id: "machines", label: "Makineler", icon: WashingMachine },
+  { id: "washers", label: "Çamaşır", icon: WashingMachine },
+  { id: "dryers", label: "Kurutma", icon: Wind },
   { id: "reservations", label: "Rezervasyonlar", icon: CalendarDays },
   { id: "members", label: "Üyeler", icon: Users, admin: true },
   { id: "invites", label: "Davetler", icon: KeyRound, admin: true },
@@ -51,7 +54,7 @@ const roleLabels = { owner: "Alan sahibi", admin: "Yönetici", member: "Üye" };
 export function LaundryApp() {
   const { client, profile, snapshot, loading, signOut, refresh } = useLaundry();
   const [spaceId, setSpaceId] = useState("");
-  const [page, setPage] = useState<Page>("machines");
+  const [page, setPage] = useState<Page>("washers");
   const [dialog, setDialog] = useState<"join" | "create" | null>(null);
   const [inviteCode, setInviteCode] = useState("");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -71,7 +74,8 @@ export function LaundryApp() {
 
   useEffect(() => {
     const updatePage = () => {
-      const hash = window.location.hash.slice(1);
+      const raw = window.location.hash.slice(1);
+      const hash = raw === "machines" ? "washers" : raw;
       if (navigation.some((n) => n.id === hash)) setPage(hash as Page);
     };
     updatePage();
@@ -86,8 +90,8 @@ export function LaundryApp() {
 
   function selectSpace(id: string) {
     setSpaceId(id);
-    setPage("machines");
-    window.location.hash = "machines";
+    setPage("washers");
+    window.location.hash = "washers";
   }
   async function manualRefresh() {
     setRefreshing(true);
@@ -136,7 +140,7 @@ export function LaundryApp() {
       ) : (
         <div className="app-layout">
           <aside className="sidebar">
-            <a className="brand-link" href="#machines">
+            <a className="brand-link" href="#washers">
               <Brand small />
             </a>
             <div className="space-picker">
@@ -178,7 +182,7 @@ export function LaundryApp() {
                     <a
                       key={item.id}
                       href={`#${item.id}`}
-                      className={`nav-item ${page === item.id ? "selected" : ""}`}
+                      className={`nav-item ${item.id === "dryers" ? "nav-dryer" : ""} ${page === item.id ? "selected" : ""}`}
                       aria-current={page === item.id ? "page" : undefined}
                       onClick={() => setPage(item.id)}
                     >
@@ -296,8 +300,12 @@ export function LaundryApp() {
                 />
               ) : !active ? (
                 <MembershipGate space={space} />
-              ) : page === "machines" ? (
-                <MachinesPage key={space.id} space={space} />
+              ) : page === "washers" || page === "dryers" ? (
+                <MachinesPage
+                  key={`${space.id}-${page}`}
+                  space={space}
+                  machineType={page === "dryers" ? "dryer" : "washer"}
+                />
               ) : page === "reservations" ? (
                 <ReservationsPage key={space.id} space={space} />
               ) : page === "members" && admin ? (
@@ -307,7 +315,11 @@ export function LaundryApp() {
               ) : page === "rules" && admin ? (
                 <RulesPage key={space.id} space={space} />
               ) : (
-                <MachinesPage key={space.id} space={space} />
+                <MachinesPage
+                  key={space.id}
+                  space={space}
+                  machineType="washer"
+                />
               )}
             </main>
             <footer className="app-footer">

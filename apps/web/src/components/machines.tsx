@@ -9,9 +9,10 @@ import {
   QrCode,
   Settings2,
   WashingMachine,
+  Wind,
   X,
 } from "lucide-react";
-import type { Machine, Program, Slot, Space } from "@camasir/core";
+import type { Machine, MachineType, Program, Slot, Space } from "@camasir/core";
 import { activeMachines, countdown, machineLink } from "@camasir/core";
 import {
   AddProgramForm,
@@ -33,7 +34,17 @@ import {
 } from "./ui";
 import { QrLabel } from "./qr-label";
 
-export function MachinesPage({ space }: { space: Space }) {
+export function MachinesPage({
+  space,
+  machineType,
+}: {
+  space: Space;
+  machineType: MachineType;
+}) {
+  const dryer = machineType === "dryer";
+  const category = dryer ? "Kurutma makineleri" : "Çamaşır makineleri";
+  const single = dryer ? "Kurutma makinesi" : "Çamaşır makinesi";
+  const DeviceIcon = dryer ? Wind : WashingMachine;
   const { snapshot, busy, client, run } = useLaundry();
   const [add, setAdd] = useState(false);
   const [booking, setBooking] = useState<Machine | null>(null);
@@ -43,7 +54,9 @@ export function MachinesPage({ space }: { space: Space }) {
   const [quick, setQuick] = useState(false);
   const now = useClock();
   const machines =
-    snapshot?.machines.filter((item) => item.spaceId === space.id) ?? [];
+    snapshot?.machines.filter(
+      (item) => item.spaceId === space.id && item.type === machineType,
+    ) ?? [];
   const programs = snapshot?.programs ?? [];
   const using = activeMachines(machines, now);
   const hasRight =
@@ -73,12 +86,16 @@ export function MachinesPage({ space }: { space: Space }) {
       ["confirmed", "running"].includes(item.status),
   );
   return (
-    <>
+    <div className={dryer ? "machine-page machine-page-dryer" : "machine-page"}>
       <div className="page-heading">
         <div>
           <span className="section-kicker">ÇAMAŞIRHANE</span>
-          <h1>Makineler</h1>
-          <p>Müsait saatleri gör, çamaşırhanenin akışını yönet.</p>
+          <h1>{category}</h1>
+          <p>
+            {dryer
+              ? "Kurutma programını seç, uygun saatini ayır."
+              : "Yıkama programını seç, uygun saatini ayır."}
+          </p>
         </div>
         <div className="machine-heading-actions">
           <Button variant="secondary" onClick={() => setQuick(true)}>
@@ -86,7 +103,7 @@ export function MachinesPage({ space }: { space: Space }) {
           </Button>
           {admin && (
             <Button onClick={() => setAdd(true)}>
-              <Plus size={17} /> Makine ekle
+              <Plus size={17} /> {single} ekle
             </Button>
           )}
         </div>
@@ -94,7 +111,7 @@ export function MachinesPage({ space }: { space: Space }) {
       {using.length > 0 && (
         <section className="panel live-machines">
           <div className="panel-header">
-            <h2>Aktif makineler</h2>
+            <h2>{dryer ? "Aktif kurutmalar" : "Aktif yıkamalar"}</h2>
             <span className="muted small">Kalan süre · çoktan aza</span>
           </div>
           {using.map((machine) => {
@@ -107,7 +124,7 @@ export function MachinesPage({ space }: { space: Space }) {
             const program = programs.find((p) => p.id === current?.programId);
             return (
               <article className="live-machine-row" key={machine.id}>
-                <WashingMachine size={26} />
+                <DeviceIcon size={26} />
                 <div className="live-machine-name">
                   <h3>{machine.name}</h3>
                   <p>
@@ -159,10 +176,10 @@ export function MachinesPage({ space }: { space: Space }) {
       <div className="stat-grid">
         <div className="stat-card">
           <span className="stat-icon">
-            <WashingMachine size={21} />
+            <DeviceIcon size={21} />
           </span>
           <div>
-            <span>Toplam makine</span>
+            <span>{single} sayısı</span>
             <strong>{machines.length}</strong>
           </div>
         </div>
@@ -198,11 +215,12 @@ export function MachinesPage({ space }: { space: Space }) {
             <div>
               <strong>
                 {own.status === "running"
-                  ? "Yıkaman devam ediyor"
+                  ? "Kullanımın sürüyor"
                   : "Sıradaki rezervasyonun"}
               </strong>
               <span>
-                {machines.find((m) => m.id === own.machineId)?.name ?? "Makine"}{" "}
+                {snapshot?.machines.find((m) => m.id === own.machineId)?.name ??
+                  "Makine"}{" "}
                 · {dateTime(own.startsAt)}
                 {own.estimatedEndAt
                   ? ` · Tahmini bitiş ${time(own.estimatedEndAt)}`
@@ -217,7 +235,7 @@ export function MachinesPage({ space }: { space: Space }) {
       )}
       <div className="section-heading">
         <h2>
-          Makine durumu <span className="count">{machines.length}</span>
+          {category} <span className="count">{machines.length}</span>
         </h2>
         <span className="live-label">
           <span /> Canlı durum
@@ -226,8 +244,12 @@ export function MachinesPage({ space }: { space: Space }) {
       {machines.length === 0 ? (
         <div className="panel">
           <EmptyState
-            icon={<WashingMachine size={32} />}
-            title="Çamaşırhanen hazır, makineleri ekleyelim"
+            icon={<DeviceIcon size={32} />}
+            title={
+              dryer
+                ? "Henüz kurutma makinesi yok"
+                : "Henüz çamaşır makinesi yok"
+            }
             text={
               admin
                 ? "Makine adını ve program sürelerini eklediğinde üyeler rezervasyon yapabilir."
@@ -236,7 +258,7 @@ export function MachinesPage({ space }: { space: Space }) {
           >
             {admin && (
               <Button onClick={() => setAdd(true)}>
-                <Plus size={17} /> İlk makineyi ekle
+                <Plus size={17} /> {single} ekle
               </Button>
             )}
           </EmptyState>
@@ -259,9 +281,10 @@ export function MachinesPage({ space }: { space: Space }) {
                   <StatusBadge status={machine.status} />
                 </div>
                 <div className="machine-illustration">
-                  <WashingMachine size={64} strokeWidth={1.25} />
+                  <DeviceIcon size={64} strokeWidth={1.25} />
                 </div>
                 <h3>{machine.name}</h3>
+                <span className="machine-type-tag">{single}</span>
                 <p className="machine-description">
                   {machinePrograms.length} program ·{" "}
                   {machinePrograms
@@ -274,7 +297,7 @@ export function MachinesPage({ space }: { space: Space }) {
                     {machine.estimatedEndAt
                       ? `Tahmini bitiş ${time(machine.estimatedEndAt)}`
                       : machine.status === "available"
-                        ? "Bir sonraki yıkama için hazır"
+                        ? "Kullanıma hazır"
                         : machine.status === "out_of_order"
                           ? "Bakım tamamlanana kadar kapalı"
                           : machine.status === "awaiting_pickup"
@@ -348,11 +371,15 @@ export function MachinesPage({ space }: { space: Space }) {
       </div>
       {add && (
         <Modal
-          title="Yeni makine ekle"
+          title={`Yeni ${single.toLocaleLowerCase("tr-TR")} ekle`}
           description="Üyelerin seçeceği programları ve gerçek sürelerini tanımla."
           onClose={() => setAdd(false)}
         >
-          <AddMachineForm space={space} onDone={() => setAdd(false)} />
+          <AddMachineForm
+            space={space}
+            machineType={machineType}
+            onDone={() => setAdd(false)}
+          />
         </Modal>
       )}
       {quick && (
@@ -360,7 +387,12 @@ export function MachinesPage({ space }: { space: Space }) {
           title="QR ile hızlı kullanım"
           onClose={() => !busy && setQuick(false)}
         >
-          <QuickUsageForm onDone={() => setQuick(false)} />
+          <QuickUsageForm
+            onDone={(type) => {
+              setQuick(false);
+              window.location.hash = type === "dryer" ? "dryers" : "washers";
+            }}
+          />
         </Modal>
       )}
       {programMachine && (
@@ -436,22 +468,30 @@ export function MachinesPage({ space }: { space: Space }) {
           )}
         </Modal>
       )}
-    </>
+    </div>
   );
 }
 
 function AddMachineForm({
   space,
+  machineType,
   onDone,
 }: {
   space: Space;
+  machineType: MachineType;
   onDone: () => void;
 }) {
   const { busy, run } = useLaundry();
   const [name, setName] = useState("");
   const [programs, setPrograms] = useState([
-    { name: "Hızlı yıkama", durationMinutes: 30 },
-    { name: "Standart yıkama", durationMinutes: 60 },
+    {
+      name: machineType === "dryer" ? "Hızlı kurutma" : "Hızlı yıkama",
+      durationMinutes: 30,
+    },
+    {
+      name: machineType === "dryer" ? "Dolap kuruluğu" : "Standart yıkama",
+      durationMinutes: 60,
+    },
   ]);
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -465,6 +505,7 @@ function AddMachineForm({
             name: p.name.trim(),
             durationMinutes: p.durationMinutes,
           })),
+          machineType,
         );
         return true;
       },
@@ -478,7 +519,11 @@ function AddMachineForm({
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Örn. Çamaşır makinesi 01"
+          placeholder={
+            machineType === "dryer"
+              ? "Örn. Kurutma makinesi 01"
+              : "Örn. Çamaşır makinesi 01"
+          }
           required
           maxLength={80}
         />

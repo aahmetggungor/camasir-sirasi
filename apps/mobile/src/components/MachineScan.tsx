@@ -38,7 +38,7 @@ export function MachineScan({
   state: LaundryState;
   initialCode?: string;
   onClose: () => void;
-  onMachine: (spaceId: string) => void;
+  onMachine: (spaceId: string, machineId: string) => void;
   onStarted: () => void;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
@@ -85,7 +85,6 @@ export function MachineScan({
       const found = await client.resolveMachine(value);
       await state.refresh();
       setMachineId(found.machineId);
-      onMachine(found.spaceId);
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -99,6 +98,9 @@ export function MachineScan({
       void resolve(initialCode);
     }
   }, [initialCode]);
+  useEffect(() => {
+    if (machine) onMachine(machine.spaceId, machine.id);
+  }, [machine?.id, machine?.type]);
   useEffect(() => {
     if (machineId && !programId)
       setProgramId(own?.programId ?? programs[0]?.id ?? "");
@@ -175,6 +177,11 @@ export function MachineScan({
         <>
           <Card>
             <Heading small>{space?.name}</Heading>
+            <Label>
+              {machine.type === "dryer"
+                ? "Kurutma makinesi"
+                : "Çamaşır makinesi"}
+            </Label>
             <Body muted>
               {machine.status === "available"
                 ? "Programını seç ve makineyi panelinden çalıştır."
