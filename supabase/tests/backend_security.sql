@@ -26,7 +26,7 @@ select public.cs_command('saveRules',jsonb_build_object('spaceId',(select v from
 select public.cs_command('addMachine',jsonb_build_object('spaceId',(select v from cs_test_context where k='space'),'name','Test washer','programs','[{"name":"Quick","durationMinutes":10}]'::jsonb));
 insert into cs_test_context select 'machine',id::text from public.cs_machines where space_id=(select v::uuid from cs_test_context where k='space');
 insert into cs_test_context select 'program',id::text from public.cs_programs where machine_id=(select v::uuid from cs_test_context where k='machine');
-insert into cs_test_context select 'qr',qr_token from public.cs_machines where id=(select v::uuid from cs_test_context where k='machine');
+insert into cs_test_context select 'qr',item->>'qrToken' from jsonb_array_elements(public.cs_snapshot()->'machines') item where item->>'id'=(select v from cs_test_context where k='machine');
 select pg_temp.expect_error('update public.cs_memberships set role=''owner''','%permission denied%');
 
 select set_config('request.jwt.claims','{"sub":"22222222-2222-4222-a222-222222222222","role":"authenticated"}',true);

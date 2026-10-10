@@ -2,13 +2,20 @@
   "expo": {
     "name": "ÇamaşırSırası",
     "slug": "camasir-sirasi",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme": "camasirsirasi",
     "plugins": [
-      ["expo-camera", {"cameraPermission": "Makine üzerindeki QR kodunu okutmak için kameranı kullanıyoruz.", "recordAudioAndroid": false, "barcodeScannerEnabled": true}],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Makine üzerindeki QR kodunu okutmak için kameranı kullanıyoruz.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
       "expo-secure-store"
     ],
     "ios": {
@@ -16,6 +23,7 @@
       "bundleIdentifier": "app.camasirsirasi.mobile"
     },
     "android": {
+      "versionCode": 2,
       "package": "app.camasirsirasi.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",

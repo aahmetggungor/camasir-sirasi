@@ -420,7 +420,7 @@ function StartUsageForm({
           autoComplete="off"
         />
       </Field>
-      {client?.mode === "demo" && machine && (
+      {client?.mode === "demo" && machine?.qrToken && (
         <Button
           type="button"
           variant="secondary"

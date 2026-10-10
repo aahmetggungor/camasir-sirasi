@@ -104,6 +104,12 @@ Bu invoker timer fonksiyonu authenticated/anon tarafından çağrılamaz; cron s
 
 ## Testler ve tekrar çalıştırma
 
+Makine QR anahtarları `private.cs_machine_codes` tablosundadır. Bu tablo istemci rollerine kapalıdır ve Realtime yayınına eklenmez. Ortak `cs_machines.qr_token` alanı uyumluluk için boş tutulur; INSERT WAL kayıtları da anahtar içermez. Snapshot gerçek QR anahtarını yalnız aktif yönetici/sahibe verir. Eski etiketler taşınırken korunur; kullanım başlatma işlemi özel tabloyla kodu doğrular. Sabit etiket fotoğrafıyla paylaşılabildiğinden QR, fiziksel varlık kanıtı değildir.
+
+QR hızlı kullanım: `private.cs_command` yeni `resolveMachine`, `startWalkIn`, `addProgram` ve `watchMachine` işlemlerini yönetir; önceki işlemler yetkili `cs_command_v1` gövdesine yönlendirilir. Eski gövdeler doğrudan istemciye kapalıdır. `resolveMachine` yalnız aktif üyede makine seçimini döndürür; kayıt yazmaz. `startWalkIn` gerçek makine/program eşleşmesini, alan kilidini, tek hakkı, FIFO teklifini, kotayı, kapanışı ve sonraki rezervasyonu kontrol edip kullanım ile makine durumunu aynı transaction içinde yazar.
+
+`cs_machine_watches` sadece kişinin kendi aktif alan takibini RLS ile gösterir; istemci doğrudan yazamaz. Makine `running` → `awaiting_pickup` geçince sahibine tahmini bitiş hatırlatması, fiziksel teslim sonrası `available` geçince takiplere tek seferlik bildirim yazılır. Takip 24 saat geçerlidir, yenilenebilir ve üyelik kapatılırsa silinir. Bildirim makineyi kullanıcıya ayırmaz. `supabase/tests/qr_walk_in.sql` gerçek SQL izin ve akış regresyonudur; sonunda rollback yapılır.
+
 `node --test tests/backend.test.mjs` yerel demo adaptörünün aynı üretim kaynağında üyelik, QR, kota, çakışma, eski teslim, FIFO teklif ve kalıcı storage davranışlarını denetler. Demo testleri PostgreSQL güvenlik testinin yerine geçmez.
 
 `supabase/tests/backend_security.sql` gerçek PostgreSQL üzerinde synthetic Auth kullanıcılarıyla izin/ret senaryolarını test eder. Tüm işlemleri tek transaction içinde yapıp `ROLLBACK` ettiği için gerçek hesap ve çamaşırhane oluşturmaz. Test PostgreSQL'in çakışma kısıtını, RLS'i, engellemeyi, eski session ID'sini, tahmini bitişi ve süresi dolmuş teklifi gerçekten kullanır. Supabase'e migration uygulanmadan bu test çalıştırılamaz.

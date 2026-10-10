@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import type { Reservation, Space } from "@camasir/core";
+import { countdown } from "@camasir/core";
 import {
   Badge,
   Body,
@@ -151,7 +152,7 @@ function StartSheet({
         autoCorrect={false}
         placeholder="Etiketteki makine kodu"
       />
-      {client.mode === "demo" && machine && (
+      {client.mode === "demo" && machine?.qrToken && (
         <Notice>Sunum makine kodu: {machine.qrToken}</Notice>
       )}
       <Pressable
@@ -192,19 +193,22 @@ function StartSheet({
   );
 }
 
-function WaitlistSheet({
+export function WaitlistSheet({
   space,
   state,
   onClose,
+  machineId,
 }: {
   space: Space;
   state: LaundryState;
   onClose: () => void;
+  machineId?: string;
 }) {
   const machines =
     state.snapshot?.machines.filter(
       (item) =>
         item.spaceId === space.id &&
+        (!machineId || item.id === machineId) &&
         !["out_of_order", "needs_check"].includes(item.status),
     ) ?? [];
   const programs =
@@ -442,6 +446,11 @@ export function QueueScreen({
                   {time(reservation.estimatedEndAt, space.timezone)}
                 </Text>
               </Row>
+            )}
+            {running && (
+              <Text style={s.countdown}>
+                {countdown(reservation.estimatedEndAt, now)}
+              </Text>
             )}
             {running ? (
               <>

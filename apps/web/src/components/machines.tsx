@@ -12,6 +12,13 @@ import {
   X,
 } from "lucide-react";
 import type { Machine, Program, Slot, Space } from "@camasir/core";
+import { activeMachines, countdown, machineLink } from "@camasir/core";
+import {
+  AddProgramForm,
+  MachineWaitForm,
+  QuickUsageForm,
+  useClock,
+} from "./machine-actions";
 import { useLaundry } from "@/lib/laundry";
 import {
   Button,
@@ -31,9 +38,27 @@ export function MachinesPage({ space }: { space: Space }) {
   const [add, setAdd] = useState(false);
   const [booking, setBooking] = useState<Machine | null>(null);
   const [codeMachine, setCodeMachine] = useState<Machine | null>(null);
+  const [programMachine, setProgramMachine] = useState<Machine | null>(null);
+  const [waiting, setWaiting] = useState<Machine | null>(null);
+  const [quick, setQuick] = useState(false);
+  const now = useClock();
   const machines =
     snapshot?.machines.filter((item) => item.spaceId === space.id) ?? [];
   const programs = snapshot?.programs ?? [];
+  const using = activeMachines(machines, now);
+  const hasRight =
+    !!snapshot?.reservations.some(
+      (r) =>
+        r.spaceId === space.id &&
+        r.userId === snapshot.profile.id &&
+        ["offered", "confirmed", "running"].includes(r.status),
+    ) ||
+    !!snapshot?.waitlist.some(
+      (w) =>
+        w.spaceId === space.id &&
+        w.userId === snapshot.profile.id &&
+        ["waiting", "offered"].includes(w.status),
+    );
   const admin = space.role !== "member";
   const available = machines.filter(
     (item) => item.status === "available",
@@ -55,12 +80,82 @@ export function MachinesPage({ space }: { space: Space }) {
           <h1>Makineler</h1>
           <p>Müsait saatleri gör, çamaşırhanenin akışını yönet.</p>
         </div>
-        {admin && (
-          <Button onClick={() => setAdd(true)}>
-            <Plus size={17} /> Makine ekle
+        <div className="machine-heading-actions">
+          <Button variant="secondary" onClick={() => setQuick(true)}>
+            <QrCode size={17} /> QR / Hızlı başlat
           </Button>
-        )}
+          {admin && (
+            <Button onClick={() => setAdd(true)}>
+              <Plus size={17} /> Makine ekle
+            </Button>
+          )}
+        </div>
       </div>
+      {using.length > 0 && (
+        <section className="panel live-machines">
+          <div className="panel-header">
+            <h2>Aktif makineler</h2>
+            <span className="muted small">Kalan süre · çoktan aza</span>
+          </div>
+          {using.map((machine) => {
+            const watched = snapshot?.watches.some(
+              (w) => w.machineId === machine.id,
+            );
+            const current = snapshot?.reservations.find(
+              (r) => r.machineId === machine.id && r.status === "running",
+            );
+            const program = programs.find((p) => p.id === current?.programId);
+            return (
+              <article className="live-machine-row" key={machine.id}>
+                <WashingMachine size={26} />
+                <div className="live-machine-name">
+                  <h3>{machine.name}</h3>
+                  <p>
+                    {program?.name} · Tahmini bitiş{" "}
+                    {machine.estimatedEndAt
+                      ? time(machine.estimatedEndAt)
+                      : "—"}
+                  </p>
+                </div>
+                <strong className="live-countdown">
+                  {countdown(machine.estimatedEndAt, now)}
+                </strong>
+                <div className="live-machine-actions">
+                  <Button
+                    variant="secondary"
+                    disabled={!!busy}
+                    onClick={() =>
+                      void run(
+                        "Bildirim takibi güncelleniyor",
+                        async (c) => {
+                          await c.watchMachine(machine.id, !watched);
+                          return true;
+                        },
+                        watched
+                          ? "Takip kaldırıldı."
+                          : "Teslim onaylanınca uygulama içi bildirim gelecek.",
+                      )
+                    }
+                  >
+                    {watched ? "Bildirimi kaldır" : "Boşalınca haber ver"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={!!busy || hasRight}
+                    onClick={() => setWaiting(machine)}
+                  >
+                    Sıra iste
+                  </Button>
+                </div>
+              </article>
+            );
+          })}
+          <p className="live-machine-note">
+            Bildirim hakkı ayırmaz. Çamaşırlar alınınca teslim bildirimi gelir;
+            sıra isteği ise uygun boşlukta süreli teklif verir.
+          </p>
+        </section>
+      )}
       <div className="stat-grid">
         <div className="stat-card">
           <span className="stat-icon">
@@ -192,6 +287,7 @@ export function MachinesPage({ space }: { space: Space }) {
                   className="full-width"
                   onClick={() => setBooking(machine)}
                   disabled={
+                    hasRight ||
                     machine.status === "out_of_order" ||
                     machine.status === "needs_check" ||
                     machinePrograms.length === 0
@@ -204,6 +300,9 @@ export function MachinesPage({ space }: { space: Space }) {
                   <div className="machine-admin">
                     <button onClick={() => setCodeMachine(machine)}>
                       <QrCode size={15} /> Makine kodu
+                    </button>
+                    <button onClick={() => setProgramMachine(machine)}>
+                      <Plus size={15} /> Program ekle
                     </button>
                     {["available", "out_of_order", "needs_check"].includes(
                       machine.status,
@@ -256,6 +355,37 @@ export function MachinesPage({ space }: { space: Space }) {
           <AddMachineForm space={space} onDone={() => setAdd(false)} />
         </Modal>
       )}
+      {quick && (
+        <Modal
+          title="QR ile hızlı kullanım"
+          onClose={() => !busy && setQuick(false)}
+        >
+          <QuickUsageForm onDone={() => setQuick(false)} />
+        </Modal>
+      )}
+      {programMachine && (
+        <Modal
+          title={`${programMachine.name} · Program ekle`}
+          onClose={() => !busy && setProgramMachine(null)}
+        >
+          <AddProgramForm
+            machine={programMachine}
+            onDone={() => setProgramMachine(null)}
+          />
+        </Modal>
+      )}
+      {waiting && (
+        <Modal
+          title={`${waiting.name} · Sıra iste`}
+          onClose={() => !busy && setWaiting(null)}
+        >
+          <MachineWaitForm
+            machine={waiting}
+            space={space}
+            onDone={() => setWaiting(null)}
+          />
+        </Modal>
+      )}
       {booking && (
         <Modal
           title={`${booking.name} · Rezervasyon`}
@@ -277,7 +407,10 @@ export function MachinesPage({ space }: { space: Space }) {
           onClose={() => setCodeMachine(null)}
         >
           <div className="code-panel">
-            <QrLabel value={codeMachine.qrToken} name={codeMachine.name} />
+            <QrLabel
+              value={machineLink(codeMachine.qrToken)}
+              name={codeMachine.name}
+            />
             <code>{codeMachine.qrToken}</code>
             <p>
               Makinenin yanına yerleştir. Üyeler mobilde QR okuyabilir veya bu

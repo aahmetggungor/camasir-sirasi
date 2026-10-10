@@ -14,6 +14,7 @@ import type {
   Slot,
 } from "./types";
 import { DEFAULT_RULES, validateRules } from "./rules";
+import { machineCode } from "./machines";
 
 type DemoState = {
   session: string | null;
@@ -28,6 +29,12 @@ type DemoState = {
   notifications: Array<Notification & { userId: string }>;
   invites: Array<{ code: string; spaceId: string; expiresAt: string }>;
   deadlines: Record<string, string>;
+  watches: Array<{
+    machineId: string;
+    spaceId: string;
+    userId: string;
+    expiresAt: string;
+  }>;
   current: Record<string, string>;
 };
 const KEY = "camasirsirasi-demo-v1";
@@ -113,6 +120,7 @@ function seed(): DemoState {
     ],
     deadlines: {},
     current: {},
+    watches: [],
   };
 }
 
@@ -126,6 +134,7 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
     if (raw) {
       try {
         memory = JSON.parse(raw) as DemoState;
+        memory.watches ??= [];
       } catch {
         memory = seed();
       }
@@ -264,8 +273,25 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
         m.status === "running" &&
         m.estimatedEndAt &&
         time(m.estimatedEndAt) <= now
-      )
+      ) {
         m.status = "awaiting_pickup";
+        const r = db.reservations.find((r) => r.id === db.current[m.id]);
+        if (
+          r &&
+          db.memberships.some(
+            (mm) =>
+              mm.spaceId === m.spaceId &&
+              mm.userId === r.userId &&
+              mm.status === "active",
+          )
+        )
+          notify(
+            db,
+            r.userId,
+            "Tahmini yıkama süresi doldu",
+            `${m.name}: çamaşırlarını kontrol edip aldıktan sonra teslimi onayla.`,
+          );
+      }
       const s = db.spaces.find((s) => s.id === m.spaceId)!;
       for (const r of db.reservations.filter(
         (r) =>
@@ -413,6 +439,35 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
       throw new Error("Bu kullanım size ait değil.");
     return r;
   }
+  function startRecord(db: DemoState, r: Reservation, machineQr: string) {
+    const m = machine(db, r.machineId),
+      p = program(db, r.programId),
+      s = space(db, r.spaceId);
+    if (r.status !== "confirmed")
+      throw new Error("Rezervasyon başlatılabilir durumda değil.");
+    if (machineCode(machineQr) !== m.qrToken)
+      throw new Error("QR kodu bu makineye ait değil.");
+    if (m.status !== "available" || db.current[m.id])
+      throw new Error("Makine henüz fiziksel olarak boş değil.");
+    const now = Date.now();
+    if (now < time(r.startsAt) || now > time(db.deadlines[r.id]))
+      throw new Error(
+        "Başlangıç zamanı henüz gelmedi veya tolerans süresi geçti.",
+      );
+    if (
+      now + minutes(p.durationMinutes + s.rules.pickupMinutes) >
+      time(r.endsAt)
+    )
+      throw new Error(
+        "Gecikme nedeniyle program sonraki rezervasyona sığmıyor.",
+      );
+    r.status = "running";
+    r.startedAt = iso(now);
+    r.estimatedEndAt = iso(now + minutes(p.durationMinutes));
+    m.status = "running";
+    m.estimatedEndAt = r.estimatedEndAt;
+    db.current[m.id] = r.id;
+  }
   return {
     mode: "demo",
     getSession: () =>
@@ -465,6 +520,14 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
         );
         const snapshot: Snapshot = {
           profile: u,
+          watches: db.watches
+            .filter(
+              (w) =>
+                w.userId === u.id &&
+                active.has(w.spaceId) &&
+                time(w.expiresAt) > Date.now(),
+            )
+            .map(({ userId, ...w }) => w),
           spaces: db.spaces
             .filter((s) => mine.some((m) => m.spaceId === s.id))
             .map((s) => {
@@ -474,7 +537,12 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
           memberships: db.memberships.filter(
             (m) => m.userId === u.id || admins.has(m.spaceId),
           ),
-          machines: db.machines.filter((m) => active.has(m.spaceId)),
+          machines: db.machines
+            .filter((m) => active.has(m.spaceId))
+            .map((m) => ({
+              ...m,
+              qrToken: admins.has(m.spaceId) ? m.qrToken : "",
+            })),
           programs: db.programs.filter((p) =>
             db.machines.some(
               (m) => m.id === p.machineId && active.has(m.spaceId),
@@ -659,6 +727,134 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
           ...programs.map((p) => ({ id: id(), machineId: mid, ...p })),
         );
       }),
+    resolveMachine: (qr) =>
+      run((db) => {
+        const m = db.machines.find((m) => m.qrToken === machineCode(qr));
+        if (!m) throw new Error("Makine bulunamadı veya erişiminiz yok.");
+        space(db, m.spaceId);
+        return { machineId: m.id, spaceId: m.spaceId };
+      }),
+    addProgram: (machineId, name, durationMinutes) =>
+      run((db) => {
+        const m = machine(db, machineId);
+        space(db, m.spaceId, true);
+        const existing = db.programs.filter((p) => p.machineId === m.id);
+        if (existing.length >= 12)
+          throw new Error("Bir makine için en fazla 12 program ekleyin.");
+        if (
+          !name.trim() ||
+          name.trim().length > 80 ||
+          !Number.isInteger(durationMinutes) ||
+          durationMinutes < 10 ||
+          durationMinutes > 240
+        )
+          throw new Error("Program adı ve 10–240 dakika arasında süre girin.");
+        if (
+          existing.some(
+            (p) =>
+              p.name.toLocaleLowerCase() === name.trim().toLocaleLowerCase(),
+          )
+        )
+          throw new Error("Bu program adı zaten var.");
+        db.programs.push({
+          id: id(),
+          machineId: m.id,
+          name: name.trim(),
+          durationMinutes,
+        });
+      }),
+    watchMachine: (machineId, enabled) =>
+      run((db) => {
+        const m = machine(db, machineId),
+          u = user(db);
+        if (!enabled) {
+          db.watches = db.watches.filter(
+            (w) => w.machineId !== m.id || w.userId !== u.id,
+          );
+          return;
+        }
+        if (!["running", "awaiting_pickup"].includes(m.status))
+          throw new Error("Bu makinede takip edilecek aktif kullanım yok.");
+        db.watches = db.watches.filter((w) => time(w.expiresAt) > Date.now());
+        if (!db.watches.some((w) => w.machineId === m.id && w.userId === u.id))
+          db.watches.push({
+            machineId: m.id,
+            spaceId: m.spaceId,
+            userId: u.id,
+            expiresAt: iso(Date.now() + 86_400_000),
+          });
+      }),
+    startWalkIn: (qr, programId) =>
+      run((db) => {
+        const found = db.machines.find((m) => m.qrToken === machineCode(qr));
+        if (!found) throw new Error("Makine bulunamadı veya erişiminiz yok.");
+        const m = machine(db, found.id),
+          p = program(db, programId, m.id),
+          s = space(db, m.spaceId),
+          u = user(db),
+          now = Date.now();
+        if (m.status !== "available" || db.current[m.id])
+          throw new Error("Makine henüz fiziksel olarak boş değil.");
+        const own = db.reservations.find(
+          (r) => r.spaceId === s.id && r.userId === u.id && live(r),
+        );
+        if (own) {
+          if (
+            own.status !== "confirmed" ||
+            own.machineId !== m.id ||
+            own.programId !== p.id
+          )
+            throw new Error(
+              "Bu alanda zaten aktif bir kullanım hakkınız var. Ayrılmış programınızı kullanın.",
+            );
+          startRecord(db, own, m.qrToken);
+          return own.id;
+        }
+        if (hasRight(db, s.id, u.id))
+          throw new Error(
+            "Bu alanda zaten aktif bir kullanım hakkınız veya sıranız var.",
+          );
+        const end = now + minutes(p.durationMinutes + s.rules.pickupMinutes);
+        if (!inHours(s, now, end))
+          throw new Error(
+            "Program ve teslim süresi çalışma saatlerine sığmıyor.",
+          );
+        if (!quota(db, s, u.id, now))
+          throw new Error(
+            "Günlük veya yoğun saat kullanım sınırına ulaştınız.",
+          );
+        if (
+          db.reservations.some(
+            (r) =>
+              r.machineId === m.id &&
+              live(r) &&
+              overlap(now, end, time(r.startsAt), time(r.endsAt)),
+          )
+        )
+          throw new Error(
+            "Program sonraki rezervasyona sığmıyor veya makine bir kişi için ayrıldı.",
+          );
+        const rid = id(),
+          estimatedEndAt = iso(now + minutes(p.durationMinutes));
+        db.reservations.push({
+          id: rid,
+          spaceId: s.id,
+          userId: u.id,
+          userName: u.name,
+          machineId: m.id,
+          programId: p.id,
+          startsAt: iso(now),
+          endsAt: iso(end),
+          status: "running",
+          startedAt: iso(now),
+          estimatedEndAt,
+        });
+        m.status = "running";
+        m.estimatedEndAt = estimatedEndAt;
+        db.current[m.id] = rid;
+        db.deadlines[rid] = iso(now);
+        return rid;
+      }),
     setMachineStatus: (machineId, status) =>
       run((db) => {
         const m = machine(db, machineId);
@@ -669,6 +865,8 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
         )
           throw new Error("Aktif kullanım varsa önce çamaşırları teslim alın.");
         m.status = status;
+        if (status !== "available")
+          db.watches = db.watches.filter((w) => w.machineId !== m.id);
         if (status !== "available") {
           db.reservations
             .filter(
@@ -809,36 +1007,7 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
           .forEach((w) => (w.status = "cancelled"));
       }),
     startUsage: (reservationId, machineQr) =>
-      run((db) => {
-        const r = reservation(db, reservationId),
-          m = machine(db, r.machineId),
-          p = program(db, r.programId),
-          s = space(db, r.spaceId);
-        if (r.status !== "confirmed")
-          throw new Error("Rezervasyon başlatılabilir durumda değil.");
-        if (machineQr.trim() !== m.qrToken)
-          throw new Error("QR kodu bu makineye ait değil.");
-        if (m.status !== "available" || db.current[m.id])
-          throw new Error("Makine henüz fiziksel olarak boş değil.");
-        const now = Date.now();
-        if (now < time(r.startsAt) || now > time(db.deadlines[r.id]))
-          throw new Error(
-            "Başlangıç zamanı henüz gelmedi veya tolerans süresi geçti.",
-          );
-        if (
-          now + minutes(p.durationMinutes + s.rules.pickupMinutes) >
-          time(r.endsAt)
-        )
-          throw new Error(
-            "Gecikme nedeniyle program sonraki rezervasyona sığmıyor.",
-          );
-        r.status = "running";
-        r.startedAt = iso(now);
-        r.estimatedEndAt = iso(now + minutes(p.durationMinutes));
-        m.status = "running";
-        m.estimatedEndAt = r.estimatedEndAt;
-        db.current[m.id] = r.id;
-      }),
+      run((db) => startRecord(db, reservation(db, reservationId), machineQr)),
     finishUsage: (reservationId) =>
       run((db) => {
         const r = reservation(db, reservationId, true),
@@ -849,6 +1018,25 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
         m.status = "available";
         m.estimatedEndAt = null;
         delete db.current[m.id];
+        for (const w of db.watches.filter(
+          (w) => w.machineId === m.id && time(w.expiresAt) > Date.now(),
+        )) {
+          if (
+            db.memberships.some(
+              (mm) =>
+                mm.spaceId === m.spaceId &&
+                mm.userId === w.userId &&
+                mm.status === "active",
+            )
+          )
+            notify(
+              db,
+              w.userId,
+              "Makinenin teslimi onaylandı",
+              `${m.name}: çamaşırlar alındı. Bu bildirim rezervasyon hakkı ayırmaz.`,
+            );
+        }
+        db.watches = db.watches.filter((w) => w.machineId !== m.id);
         const s = space(db, r.spaceId);
         db.reservations
           .filter(
@@ -981,6 +1169,9 @@ export function createDemoClient(storage?: StorageAdapter): LaundryClient {
   };
 }
 function revokeFuture(db: DemoState, mm: Membership) {
+  db.watches = db.watches.filter(
+    (w) => w.spaceId !== mm.spaceId || w.userId !== mm.userId,
+  );
   db.reservations
     .filter(
       (r) =>

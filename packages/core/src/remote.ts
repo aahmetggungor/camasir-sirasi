@@ -1,4 +1,5 @@
 import { createClient, type User } from "@supabase/supabase-js";
+import { machineCode } from "./machines";
 import type {
   LaundryClient,
   StorageAdapter,
@@ -109,6 +110,14 @@ export function createRemoteClient(
       command("addMachine", { spaceId, name, programs }),
     setMachineStatus: (machineId: string, status: MachineStatus) =>
       command("setMachineStatus", { machineId, status }),
+    addProgram: (machineId, name, durationMinutes) =>
+      command("addProgram", { machineId, name, durationMinutes }),
+    resolveMachine: (machineQr) =>
+      command("resolveMachine", { machineQr: machineCode(machineQr) }),
+    startWalkIn: (machineQr, programId) =>
+      command("startWalkIn", { machineQr: machineCode(machineQr), programId }),
+    watchMachine: (machineId, enabled) =>
+      command("watchMachine", { machineId, enabled }),
     getAvailability: (machineId, programId, day) =>
       command<Slot[]>("getAvailability", { machineId, programId, day }),
     reserve: (machineId, programId, startsAt) =>
@@ -116,7 +125,10 @@ export function createRemoteClient(
     cancelReservation: (reservationId) =>
       command("cancelReservation", { reservationId }),
     startUsage: (reservationId, machineQr) =>
-      command("startUsage", { reservationId, machineQr }),
+      command("startUsage", {
+        reservationId,
+        machineQr: machineCode(machineQr),
+      }),
     finishUsage: (reservationId) => command("finishUsage", { reservationId }),
     joinWaitlist: (spaceId, programId, availableUntil) =>
       command("joinWaitlist", { spaceId, programId, availableUntil }),
@@ -150,6 +162,16 @@ export function createRemoteClient(
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "cs_notifications" },
+          listener,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "cs_machine_watches" },
+          listener,
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "cs_programs" },
           listener,
         )
         .subscribe();

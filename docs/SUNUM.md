@@ -4,7 +4,7 @@
 
 1. **Problem:** Ortak makinenin boş olup olmadığını kontrol etmek, gelmeyen rezervasyonlar ve çamaşırları alma gecikmesi.
 2. **Çözüm:** Özel mekân alanı, yetkili üyelik, rezervasyon ve boşalan yere teklif.
-3. **Kullanıcı akışı:** Hesap → davet → yönetici onayı → rezervasyon → QR → kullanım → teslim alma.
+3. **Kullanıcı akışı:** Hesap → davet → yönetici onayı → QR → program → kullanım → teslim alma. Önceden saat ayırma ve boşalan yere sıra isteme de desteklenir.
 4. **Teknik yapı:** Mobil ve web iki ayrı arayüz; ortak TypeScript istemci; PostgreSQL tek karar kaynağı.
 5. **Güvenlik:** Ekran düğmesinden bağımsız olarak her işlemde aktif alan üyeliği kontrol edilir.
 6. **Sıra güvenilirliği:** Aynı alanın işlemleri kilitlenir, çakışan bloklar veritabanı kısıtıyla reddedilir.
@@ -25,6 +25,10 @@
 | `supabase/tests/backend_security.sql`        | Onaysız kullanıcı, yanlış QR ve çakışma gibi hatalı durumların reddini kanıtlar. |
 
 ## Sunum gösterimi
+
+Hızlı kullanım gösterimi: mobilde üst menüdeki QR düğmesine bas, makine etiketini okut, program kısayolunu seç ve fiziksel başlatma onayını ver. Önceden rezervasyon oluşturmadan uygun makinede kullanım açılır. Aktif makineler ekranında geri sayımı, çoktan aza sıralamayı, **Boşalınca haber ver** ile **Sıra iste** farkını göster. Bildirim hakkı ayırmaz; sıra isteği hak tutar. **Program ekle** yönetici web panelinde mevcut makine kartındadır.
+
+Kod: `MachineScan.tsx` makineyi çözüp formu açar; `packages/core/src/machines.ts` QR bağlantısı, sayaç ve sıralamayı iki platform için ortak tutar. `qr_walk_in_and_machine_alerts` migration'ındaki `startWalkIn` aynı alan kilidi altında program, üyelik, tek hak, kota ve çakışma kontrolü yapar. `qr_walk_in.sql` bu davranışların PostgreSQL testidir.
 
 Webi `?demo=1` ile aç. Yönetici hesabını doldurup giriş yap; Üyeler ekranındaki bekleyen başvuruyu incele. Doğrulama kutusu işaretlenmeden onay düğmesinin kapalı olduğunu göster. Ardından onay ver, makineleri ve bir QR etiketini göster. Üye hesabında uygun saati seç, rezervasyonu ve boşalma/teklif ekranlarını anlat.
 

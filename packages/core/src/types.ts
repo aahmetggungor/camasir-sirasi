@@ -96,6 +96,11 @@ export interface Notification {
   body: string;
   createdAt: string;
 }
+export interface MachineWatch {
+  machineId: string;
+  spaceId: string;
+  expiresAt: string;
+}
 export interface Snapshot {
   profile: UserProfile;
   spaces: Space[];
@@ -106,6 +111,7 @@ export interface Snapshot {
   waitlist: WaitlistEntry[];
   offers: Offer[];
   notifications: Notification[];
+  watches: MachineWatch[];
 }
 export interface InvitePreview {
   spaceId: string;
@@ -147,6 +153,16 @@ export interface LaundryClient {
     programs: Array<{ name: string; durationMinutes: number }>,
   ): Promise<void>;
   setMachineStatus(machineId: string, status: MachineStatus): Promise<void>;
+  addProgram(
+    machineId: string,
+    name: string,
+    durationMinutes: number,
+  ): Promise<void>;
+  resolveMachine(
+    machineQr: string,
+  ): Promise<{ machineId: string; spaceId: string }>;
+  startWalkIn(machineQr: string, programId: string): Promise<string>;
+  watchMachine(machineId: string, enabled: boolean): Promise<void>;
   getAvailability(
     machineId: string,
     programId: string,

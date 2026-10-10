@@ -48,6 +48,25 @@ Supabase şeması `supabase/migrations` altındadır. Bağlı projede migration'
 - Günlük/yoğun saat kotası; tek aktif hak ve çakışma kısıtları.
 - Uygulama içi bildirimler ve Realtime yenileme.
 
+## QR ile hızlı kullanım — 1.0.1
+
+Yönetici makineyi ve programlarını kaydeder; **Makine kodu** ekranından her makineye ait QR etiketi indirilir. Yeni etiketin içeriği `camasirsirasi://machine?code=...` biçimindedir. Kurulu mobil uygulamanın makine formunu açar. Uygulama içindeki üst menü QR düğmesiyle de okutulabilir; eski düz makine kodları geçerlidir. Bu QR üyelik vermez. Android/iPhone kamera taraması yalnız kullanıcı kamera izni verdiğinde çalışır; cihaz kamerasıyla bağlantıyı açma desteği okuyucu uygulamaya göre değişebilir.
+
+QR okut → yetkili makine bulunur → program kısayolu seçilir → süre ve tahmini bitiş görünür → kullanıcı fiziksel başlatmayı onaylar → tek işlemde kullanım kaydı açılır. Önceden rezervasyon gerekiyorsa o hak kullanılır; rezervasyonsuz kullanım da mevcut sıraya, sonraki rezervasyona, kapanışa ve kotaya uymalıdır. Okutmak tek başına kullanım yazmaz. Mevcut rezervasyon aynı makine/programa aitse yeni hak yaratmadan başlatılır.
+
+**Aktif makineler** kalan süre çoktan aza sıralanır; sayaç her saniye bitiş zaman damgasından yeniden hesaplanır. Tahmini süre dolduğunda makine teslim bekler ve kullanıcıya uygulama içi hatırlatma kaydedilir. Çamaşırlar alınmadan boş sayılmaz.
+
+- **Boşalınca haber ver:** 24 saat geçerli tek seferlik takip; fiziksel teslim onayında uygulama içi bildirim. Hak ayırmaz. İptal edilebilir; üyelik kapatılırsa silinir.
+- **Sıra iste:** seçilen makine/program için FIFO sırası; boşluk sığarsa süreli teklif. Kullanıcı kabul etmelidir.
+- **Tek hak:** bir çamaşırhane alanında bir kişinin en fazla bir aktif kullanım, rezervasyon veya sıra hakkı olur. Bildirim takibi hak değildir. Bu kural uygulama düğmesinden bağımsız olarak veritabanında denetlenir.
+- **Program ekle:** yönetici mevcut makineye 10–240 dakika arasında kısayol ekler; en fazla 12 program. Kullanıcı rastgele süre göndererek kayıtlı programı değiştiremez. Eski rezervasyonların süreleri korunur.
+
+Bildirimler mevcut sürümde uygulama içidir; uygulama kapalıyken telefonun bildirim çubuğuna push gönderilmez. iPhone'da fiziksel cihaz ve QR kamera testi ayrıca yapılmalıdır.
+
+QR anahtarları özel tabloda tutulur; normal üyenin makine listesi ve Realtime makine kayıtlarında bulunmaz. Yönetici etiket üretmek için anahtarı görebilir. Sabit QR'nin fotoğrafı paylaşılabileceğinden QR tek başına fiziksel varlık kanıtı değildir; cihaz sensörü veya değişen yerinde kod gerektiren doğrulama bu sürümde yoktur.
+
+Yeni PostgreSQL regresyonu: `supabase/tests/qr_walk_in.sql`. Yetkisiz/yanlış QR, tek hak, program yetkisi, mevcut rezervasyon/FIFO önceliği, tek seferlik hatırlatma ve takip iptali/yenilemesi gerçek veritabanında test edilir.
+
 Mağaza yayını, işletim sistemi push bildirimi, donanım entegrasyonu, kurum doğrulama rozeti, üye süre bitişi, yönetici atama ve gelişmiş raporlar bu sürümün kapsamında değildir. Tasarım belgelerinde sonraki geliştirme kararları da bulunduğundan, mevcut uygulama kapsamı için bu listeyi kullan.
 
 ## Sunum modu

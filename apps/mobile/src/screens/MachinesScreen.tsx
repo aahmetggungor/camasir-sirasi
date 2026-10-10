@@ -7,6 +7,9 @@ import {
   View,
 } from "react-native";
 import type { Machine, Slot, Space } from "@camasir/core";
+import { activeMachines, countdown } from "@camasir/core";
+import { useClock } from "../hooks/useClock";
+import { WaitlistSheet } from "./QueueScreen";
 import {
   Badge,
   Body,
@@ -205,6 +208,8 @@ export function MachinesScreen({
   onQueue: () => void;
 }) {
   const [booking, setBooking] = useState<Machine | null>(null);
+  const [waiting, setWaiting] = useState<Machine | null>(null);
+  const now = useClock();
   const machines =
     state.snapshot?.machines.filter(
       (machine) => machine.spaceId === space.id,
@@ -219,6 +224,20 @@ export function MachinesScreen({
   const free = machines.filter(
     (machine) => machine.status === "available",
   ).length;
+  const using = activeMachines(machines, now);
+  const hasRight =
+    !!state.snapshot?.reservations.some(
+      (r) =>
+        r.spaceId === space.id &&
+        r.userId === state.profile?.id &&
+        ["offered", "confirmed", "running"].includes(r.status),
+    ) ||
+    !!state.snapshot?.waitlist.some(
+      (w) =>
+        w.spaceId === space.id &&
+        w.userId === state.profile?.id &&
+        ["waiting", "offered"].includes(w.status),
+    );
   return (
     <View style={{ gap: 20 }}>
       <View style={{ gap: 7 }}>
@@ -229,6 +248,84 @@ export function MachinesScreen({
         <Badge text={`${free} boş makine`} tone="green" />
         <Label>{machines.length} makine · Bugün</Label>
       </Row>
+      {using.length > 0 && (
+        <Card>
+          <Heading small>Aktif makineler</Heading>
+          <Body muted>Kalan süre · çoktan aza</Body>
+          {using.map((machine) => {
+            const watched = state.snapshot?.watches.some(
+              (w) => w.machineId === machine.id,
+            );
+            const program = state.snapshot?.programs.find(
+              (p) =>
+                p.id ===
+                state.snapshot?.reservations.find(
+                  (r) => r.machineId === machine.id && r.status === "running",
+                )?.programId,
+            );
+            return (
+              <View
+                key={machine.id}
+                style={{
+                  gap: 10,
+                  paddingVertical: 14,
+                  borderTopWidth: 1,
+                  borderColor: colors.border,
+                }}
+              >
+                <Heading small>{machine.name}</Heading>
+                <Text
+                  style={{
+                    fontSize: 25,
+                    fontWeight: "700",
+                    color: colors.blue,
+                  }}
+                >
+                  {countdown(machine.estimatedEndAt, now)}
+                </Text>
+                <Body muted>
+                  {program?.name} · Tahmini bitiş{" "}
+                  {machine.estimatedEndAt
+                    ? time(machine.estimatedEndAt, space.timezone)
+                    : "—"}
+                </Body>
+                <Button
+                  secondary
+                  label={
+                    watched
+                      ? "Boşalma bildirimini kaldır"
+                      : "Boşalınca haber ver"
+                  }
+                  icon="notifications-outline"
+                  busy={state.busy}
+                  onPress={() =>
+                    void state.act(
+                      () => client.watchMachine(machine.id, !watched),
+                      watched
+                        ? "Bildirim takibi kaldırıldı."
+                        : "Teslim onaylanınca uygulama içi bildirim gelecek.",
+                    )
+                  }
+                />
+                <Button
+                  secondary
+                  label="Bu makine için sıra iste"
+                  icon="time-outline"
+                  disabled={hasRight || state.busy}
+                  onPress={() => {
+                    state.clearNotice();
+                    setWaiting(machine);
+                  }}
+                />
+              </View>
+            );
+          })}
+          <Notice>
+            Bildirim sana hak ayırmaz. Sıra isteği boşalan yerde süreli teklif
+            verir.
+          </Notice>
+        </Card>
+      )}
       {reservations.length > 0 && (
         <Card accent>
           <Badge
@@ -322,6 +419,7 @@ export function MachinesScreen({
               label="Uygun saatleri gör"
               secondary={machine.status !== "available"}
               disabled={
+                hasRight ||
                 machine.status === "out_of_order" ||
                 machine.status === "needs_check" ||
                 programs.length === 0 ||
@@ -347,6 +445,14 @@ export function MachinesScreen({
           state={state}
           onClose={() => setBooking(null)}
           onReserved={onQueue}
+        />
+      )}
+      {waiting && (
+        <WaitlistSheet
+          machineId={waiting.id}
+          space={space}
+          state={state}
+          onClose={() => setWaiting(null)}
         />
       )}
     </View>

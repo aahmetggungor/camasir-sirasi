@@ -2,6 +2,12 @@ import type { LaundryClient, StorageAdapter } from "./types";
 import { createDemoClient } from "./demo";
 import { createRemoteClient } from "./remote";
 export * from "./types";
+export {
+  machineCode,
+  machineLink,
+  countdown,
+  activeMachines,
+} from "./machines";
 export { DEFAULT_RULES } from "./rules";
 export interface ClientOptions {
   url?: string;

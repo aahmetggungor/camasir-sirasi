@@ -34,6 +34,8 @@ import { QueueScreen } from "./src/screens/QueueScreen";
 import { client } from "./src/services/client";
 import { colors } from "./src/theme";
 import { inviteFromUrl } from "./src/services/invites";
+import { machineCode } from "@camasir/core";
+import { MachineScan } from "./src/components/MachineScan";
 
 const tabs: Array<{
   id: "machines" | "queue" | "area";
@@ -52,6 +54,8 @@ export default function App() {
   const [picker, setPicker] = useState(false);
   const [notifications, setNotifications] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [machineQr, setMachineQr] = useState("");
+  const [scanning, setScanning] = useState(false);
   const clearInvite = useCallback(() => setInviteCode(""), []);
   const spaces = state.snapshot?.spaces ?? [];
   const space = spaces.find((item) => item.id === spaceId) ?? spaces[0];
@@ -63,6 +67,11 @@ export default function App() {
   }, [state.profile?.id]);
   useEffect(() => {
     const receive = (url: string | null) => {
+      if (url?.startsWith("camasirsirasi://machine") && machineCode(url)) {
+        setMachineQr(url);
+        setScanning(true);
+        return;
+      }
       const code = url ? inviteFromUrl(url) : null;
       if (code) {
         setInviteCode(code);
@@ -122,6 +131,17 @@ export default function App() {
                 {!!state.snapshot?.notifications.length && (
                   <View style={s.dot} />
                 )}
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Makine QR’ını okut"
+                onPress={() => {
+                  setMachineQr("");
+                  setScanning(true);
+                }}
+                style={s.notificationButton}
+              >
+                <Icon name="qr-code-outline" color={colors.blue} />
               </Pressable>
             </View>
             <ScrollView
@@ -274,6 +294,21 @@ export default function App() {
                 }}
               />
             </Sheet>
+            {scanning && (
+              <MachineScan
+                state={state}
+                initialCode={machineQr}
+                onClose={() => {
+                  setScanning(false);
+                  setMachineQr("");
+                }}
+                onMachine={(id) => {
+                  setSpaceId(id);
+                  setTab("machines");
+                }}
+                onStarted={() => setTab("queue")}
+              />
+            )}
             <Sheet
               title="Bildirimler"
               visible={notifications}
