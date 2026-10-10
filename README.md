@@ -84,7 +84,7 @@ npm test
 npm run build:web
 ```
 
-Gerçek veritabanı testi: `supabase/tests/backend_security.sql`; geçici kullanıcı/veriler sonunda `ROLLBACK` edilir. Süreçte bu test ve Supabase güvenlik denetimi başarıyla çalıştırılmıştır. Native cihaz kontrolü ile JavaScript export/TypeScript kontrolü ayrı doğrulamalardır; iPhone cihaz testi ayrıca yapılmalıdır.
+Gerçek veritabanı testi: `supabase/tests/backend_security.sql`; geçici kullanıcı/veriler sonunda `ROLLBACK` edilir. Bu test başarıyla çalıştırılmıştır; Supabase denetiminde tablo izinleri/RLS sorunu bulunmamıştır. Auth denetiminde sızmış parola korumasının kapalı olduğu uyarısı kalır. Supabase bu özelliği Pro ve üzeri planlarda sunar; mevcut Free plan yükseltilmemiştir. [Parola koruması ve yapılandırma](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Native cihaz kontrolü ile JavaScript export/TypeScript kontrolü ayrı doğrulamalardır; iPhone cihaz testi ayrıca yapılmalıdır.
 
 Bağımlılık audit raporundaki upstream `braces`, `node-forge` ve `uuid` bildirimleri geliştirme araç zincirinde izlenmektedir. `npm audit fix --force`, Expo/Next sürümlerini geriye düşürdüğü için uygulanmaz. Mağaza sürümünden önce güncel tedarikçi düzeltmeleri kontrol edilmelidir.
 
