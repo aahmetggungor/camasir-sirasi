@@ -1877,3 +1877,92 @@ td > strong,
   line-height: 1.8;
   text-align: left;
 }
+
+/* Keep the management panel usable in narrow browser windows and on phones. */
+@media (max-width: 1100px) {
+  .machine-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .invite-layout { grid-template-columns: minmax(0, 1fr); }
+  .page-content { padding: 24px; }
+  .stat-card { padding: 18px; }
+}
+
+@media (max-width: 760px) {
+  .app-layout { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: relative;
+    height: auto;
+    padding: 18px 16px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-link { align-self: center; padding: 0; }
+  .space-picker { margin: 0; padding: 10px; }
+  .space-picker > label { margin-bottom: 6px; }
+  .sidebar nav {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    min-width: 0;
+    padding-bottom: 4px;
+  }
+  .nav-label { display: none; }
+  .nav-item { margin: 0; padding: 10px 12px; flex-shrink: 0; }
+  .sidebar-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 4px 0 0;
+  }
+  .sidebar-actions > button { width: auto; padding: 9px 12px; }
+  .sidebar-bottom {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 0;
+  }
+  .sidebar-demo { margin: 0; padding: 8px; }
+  .sidebar-user { margin: 0; padding: 0; border: 0; flex: 1; min-width: 0; }
+  .topbar { height: 58px; padding: 0 16px; gap: 8px; }
+  .topbar-date, .breadcrumb > span { display: none; }
+  .page-content { padding: 24px 16px; }
+  .page-heading, .section-heading { flex-wrap: wrap; }
+  .page-heading { gap: 14px; }
+  .page-heading h1 { font-size: 25px; }
+  .rules-grid, .onboarding-grid { grid-template-columns: minmax(0, 1fr); }
+  .rules-grid { padding: 20px; gap: 22px; }
+  .panel-header, .rules-footer, .offer-card, .own-reservation-banner,
+  .waitlist-row, .app-footer { flex-wrap: wrap; }
+  .offer-actions { margin-left: 0; flex-wrap: wrap; }
+  .rules-footer { padding: 20px; }
+  .app-footer { padding: 16px; }
+  .notifications-popover { width: min(335px, calc(100vw - 32px)); }
+  .onboarding, .membership-gate { margin-top: 25px; }
+  .auth-layout { grid-template-columns: minmax(0, 1fr); }
+  .auth-story { padding: 24px; }
+  .auth-story-content, .auth-footer { display: none; }
+  .auth-form-wrap { padding: 32px 20px; }
+}
+
+@media (max-width: 480px) {
+  .machine-grid, .stat-grid, .two-columns { grid-template-columns: minmax(0, 1fr); }
+  .machine-card { padding: 20px; }
+  .machine-admin { flex-wrap: wrap; }
+  .stat-card { padding: 16px; }
+  .stat-card div > span { margin-bottom: 6px; }
+  .stat-card strong { font-size: 22px; }
+  .slot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .modal-content { padding: 20px; }
+  .modal-actions, .demo-buttons { flex-wrap: wrap; }
+  .brand-small { font-size: 15px; gap: 6px; }
+  .brand-small .brand-mark { width: 30px; height: 30px; }
+  .member-detail { grid-template-columns: minmax(0, 1fr); }
+  .program-input-row { grid-template-columns: minmax(0, 1fr) 72px 28px; gap: 6px; }
+}
