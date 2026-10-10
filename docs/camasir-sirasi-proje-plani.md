@@ -1,7 +1,7 @@
 # ÇamaşırSırası — ürün, tasarım ve geliştirme planı
 
 Tarih: 10 Ekim 2026  
-Durum: Önerilen tasarım; henüz çalışan ürün veya açılmış servis yok.  
+Durum: Tasarım ve sonraki geliştirme kararları. Güncel çalışan sürüm ve sınırları için [README](../README.md) dosyasını kullan.
 Geliştirme modeli: Tek geliştirici.  
 Çalışma hedefi: Yapay zekâ desteğiyle 5 saatlik tek geliştirme oturumunda çalışan ilk sürüm.  
 Kapsam: Ortak çamaşır makineleri bulunan yurtlar, apartmanlar, siteler, kampüsler ve işletmeler. Her mekân kendi alanını oluşturur; kullanıcılar davetle katılır.

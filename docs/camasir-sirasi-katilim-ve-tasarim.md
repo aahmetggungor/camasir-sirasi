@@ -1,6 +1,6 @@
 # ÇamaşırSırası — tasarım, mobil uygulama ve üyelik kararları
 
-Tarih: 10 Ekim 2026. Durum: Geliştirme öncesi tasarım. Çalışan backend, mağaza yayını veya gerçek kurum doğrulaması henüz yapılmadı.
+Tarih: 10 Ekim 2026. Durum: Tasarım kararları. Mobil/web kodu ve Supabase backend geliştirilmiştir; güncel çalışan kapsamı [README](../README.md) dosyasında yer alır. Mağaza yayını ve gerçek kurum doğrulaması henüz yapılmadı.
 
 ## 1. Ürün ve platform kararı
 
