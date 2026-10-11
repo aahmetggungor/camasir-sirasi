@@ -2,7 +2,11 @@
 
 Ortak çamaşırhaneler için **Android/iPhone mobil uygulaması**, ayrı **web yönetim paneli** ve ortak **Supabase PostgreSQL** altyapısı.
 
-**Streamlit web:** GitHub'dan Streamlit Community Cloud'a kurulabilen Python arayüzü de repodadır. Başlangıç dosyası `streamlit_app.py`; yerel çalıştırma, Cloud ayarları ve kapsam için [STREAMLIT.md](docs/STREAMLIT.md). Kodun repoda bulunması bulut yayınının tamamlandığı anlamına gelmez; gerçek yayın adresi kurulum sonrası paylaşılır.
+**Canlı web sürümü:** [ÇamaşırSırası'nı aç](https://camasir-sirasi-ahmet.streamlit.app/).
+
+Streamlit arayüzü Community Cloud'da yayındadır. Uygulama hesabınla giriş yapabilir veya kayıt olabilirsin. Alanlara erişim için ilgili alanın üyelik ve yönetici onayı kuralları geçerlidir.
+
+**Streamlit kaynakları:** Python arayüzü `apps/streamlit/` klasöründedir; başlangıç dosyası repo kökündeki `streamlit_app.py` dosyasıdır. Yerel çalıştırma, Cloud ayarları ve kapsam için [STREAMLIT.md](docs/STREAMLIT.md).
 
 Bu repo Ahmet Güngör'ün laptopunda geliştirilir. Proje klasörü: `C:\Users\rog\Documents\Projects\CamasirSirasi`. Kaynaklar VS Code'da; üretilen Android projesi Android Studio'da açılır.
 
@@ -92,6 +96,8 @@ Demo kişisel parola saklamaz ve gerçek Supabase hesabı üretmez.
 ```text
 apps/mobile/           React Native ekranları, kamera, güvenli oturum deposu
 apps/web/              Next.js yönetim ekranları ve QR etiketleri
+apps/streamlit/        Canlı Streamlit web arayüzü ve Supabase istemcisi
+streamlit_app.py       Streamlit Community Cloud başlangıç dosyası
 packages/core/         İki uygulamanın ortak tipleri ve veri istemcisi
 supabase/migrations/   Tablolar, RLS, güvenli işlemler ve Cron
 supabase/tests/        Gerçek PostgreSQL izin/çakışma testleri
