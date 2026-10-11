@@ -19,7 +19,9 @@
       "label": "ÇamaşırSırası: Android hazırla",
       "type": "shell",
       "command": "npx.cmd expo prebuild --platform android --no-install",
-      "options": { "cwd": "${workspaceFolder}/apps/mobile" },
+      "options": {
+        "cwd": "${workspaceFolder}/apps/mobile"
+      },
       "problemMatcher": []
     },
     {
@@ -44,6 +46,13 @@
       "label": "ÇamaşırSırası: Testler",
       "type": "shell",
       "command": "npm.cmd test",
+      "problemMatcher": []
+    },
+    {
+      "label": "ÇamaşırSırası: Streamlit Web",
+      "type": "shell",
+      "command": ".\\work\\streamlit-venv\\Scripts\\python.exe -m streamlit run streamlit_app.py",
+      "isBackground": true,
       "problemMatcher": []
     }
   ]

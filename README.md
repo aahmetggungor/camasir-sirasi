@@ -2,6 +2,8 @@
 
 Ortak çamaşırhaneler için **Android/iPhone mobil uygulaması**, ayrı **web yönetim paneli** ve ortak **Supabase PostgreSQL** altyapısı.
 
+**Streamlit web:** GitHub'dan Streamlit Community Cloud'a kurulabilen Python arayüzü de repodadır. Başlangıç dosyası `streamlit_app.py`; yerel çalıştırma, Cloud ayarları ve kapsam için [STREAMLIT.md](docs/STREAMLIT.md). Kodun repoda bulunması bulut yayınının tamamlandığı anlamına gelmez; gerçek yayın adresi kurulum sonrası paylaşılır.
+
 Bu repo Ahmet Güngör'ün laptopunda geliştirilir. Proje klasörü: `C:\Users\rog\Documents\Projects\CamasirSirasi`. Kaynaklar VS Code'da; üretilen Android projesi Android Studio'da açılır.
 
 ## Çalıştırma

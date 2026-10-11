@@ -1,0 +1,5 @@
+# Streamlit Community Cloud web interface. Full dependency pins: requirements.txt.
+streamlit==1.65.0
+supabase==2.32.0
+qrcode==8.2
+pillow==12.3.0
