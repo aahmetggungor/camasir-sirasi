@@ -1,0 +1,18 @@
+# Next.js web arayüzü. Veriler mevcut Supabase projesinde tutulur.
+services:
+  - type: web
+    name: camasir-sirasi-web
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build:web
+    startCommand: npm run start --workspace @camasir/web -- --hostname 0.0.0.0
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+        sync: false

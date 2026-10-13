@@ -10,6 +10,13 @@ Streamlit arayüzü Community Cloud'da yayındadır. Uygulama hesabınla giriş 
 
 Bu repo Ahmet Güngör'ün laptopunda geliştirilir. Proje klasörü: `C:\Users\rog\Documents\Projects\CamasirSirasi`. Kaynaklar VS Code'da; üretilen Android projesi Android Studio'da açılır.
 
+## Kodları açıp inceleme
+
+- **VS Code → File → Open Folder:** `C:\Users\rog\Documents\Projects\CamasirSirasi` klasörünü aç. Bütün kaynaklar aynı projede görünür.
+- **Android Studio → Open:** `apps/mobile/android` klasörünü aç. Bu klasör Android derlemesini içerir; telefon ekranlarının asıl kodları `apps/mobile/App.tsx` ve `apps/mobile/src` içindedir. Yalnız kod incelemek için emülatör açmak gerekmez.
+- Dosya görevleri ve örnek bir kullanımın kodda izlediği yol için [KOD_REHBERI.md](docs/KOD_REHBERI.md) dosyasından başla.
+- GitHub üzerinden Next.js web arayüzünü Render'da yayınlamak için [RENDER.md](docs/RENDER.md) ve kökteki `render.yaml` hazırdır. Render yayını henüz yapılmamıştır; mevcut canlı adres Streamlit sürümüdür.
+
 ## Çalıştırma
 
 ```powershell

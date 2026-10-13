@@ -36,6 +36,7 @@ export function createRemoteClient(
     action: string,
     payload: Record<string, unknown> = {},
   ): Promise<T> {
+    // Ekran işlemi ve bilgilerini gönderir. İzin, kota ve çakışma kararını SQL verir.
     const { data, error } = await supabase.rpc("cs_command", {
       p_action: action,
       p_payload: payload,
@@ -87,7 +88,7 @@ export function createRemoteClient(
       if (error) throw new Error(error.message);
     },
     async getSnapshot() {
-      // Saat dolması yalnızca teslim alınmayı beklemeye geçer; fiziksel boşalma QR/kullanıcı onayıdır.
+      // Süre dolunca makine teslim bekler. Boş olması için ayrıca teslim onayı gerekir.
       await command("refreshTimers");
       const { data, error } = await supabase.rpc("cs_snapshot");
       if (error) throw new Error(error.message);

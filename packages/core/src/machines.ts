@@ -1,6 +1,6 @@
 import type { Machine } from "./types";
 
-/** QR is a machine selector, never a membership invitation or an access grant. */
+// QR hangi makinenin seçildiğini söyler. Kullanım iznini sunucu üyelikten kontrol eder.
 export function machineCode(value: string): string {
   const raw = value.trim();
   if (raw.includes("://")) {
@@ -19,6 +19,7 @@ export function machineLink(token: string): string {
   return `camasirsirasi://machine?code=${encodeURIComponent(token)}`;
 }
 export function countdown(end: string | null, now = Date.now()): string {
+  // Sayaç bitiş zamanından hesaplanır; ekran yenilenince kaldığı yerden devam eder.
   if (!end) return "Süre bilgisi yok";
   const seconds = Math.max(0, Math.ceil((Date.parse(end) - now) / 1000));
   if (!Number.isFinite(seconds)) return "Süre bilgisi yok";
@@ -31,6 +32,7 @@ export function activeMachines(
   machines: Machine[],
   now = Date.now(),
 ): Machine[] {
+  // Süresi dolan makine de teslim alınana kadar aktif listede kalır.
   return machines
     .filter((m) => ["running", "awaiting_pickup"].includes(m.status))
     .sort(

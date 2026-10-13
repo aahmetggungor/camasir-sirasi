@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 
 export function useClock() {
+  // Bu saat ekranı yeniler; program süresini veya veritabanı kaydını değiştirmez.
   const [now, setNow] = useState(Date.now);
   useEffect(() => {
     const timer = setInterval(() => {
